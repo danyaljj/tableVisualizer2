@@ -509,7 +509,8 @@ class TableVisualizer extends React.Component {
             question: questionEmpty,
             BKColor: 'red',
             response: 'empty',
-            response11: 'empty'
+            response11: 'empty',
+            activeAlignments: []
         };
     }
 
@@ -528,19 +529,37 @@ class TableVisualizer extends React.Component {
 
     ShowARowOfTable(row) {
         var rows = [];
+        var self = this;
         row.forEach(function (tableCell) {
             window.console.log("This is a msg: ");
             window.console.log(tableCell);
             window.console.log(tableCell[1]);
             window.console.log(tableCell[1].length);
-            var color = 'white';
+            var klazz = '';
             if (tableCell[1].length > 0)
-                color = 'yellow';
-            var style = {
-                backgroundColor: color
+                klazz = "aligned";
+
+            var highlightAlignedCells = function() {
+                self.setState({ activeAlignments: tableCell[1] });
             };
-            rows.push(<td
-                style={style}> {JSON.stringify(tableCell[0])}: {JSON.stringify(tableCell[1])} </td>);
+
+            var unhighlight = function() {
+                self.setState({ activeAlignments: [] });
+            };
+
+            var isActive = self.state.activeAlignments.filter(function(i) {
+                return tableCell[1].indexOf(i) !== -1;
+            }).length > 0;
+
+            if (isActive) {
+                klazz += ' active-alignment';
+            }
+
+            rows.push(
+                <td className={klazz} onMouseEnter={highlightAlignedCells} onMouseLeave={unhighlight}>
+                    {JSON.stringify(tableCell[0])}: {JSON.stringify(tableCell[1])}
+                </td>
+            );
         });
         return ( {rows} );
     }
