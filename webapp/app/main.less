@@ -14,7 +14,10 @@ pre {
 }
 
 table {
-  margin-bottom: 30px;
+  margin: 0 30px 30px 0;
+  display: inline-block;
+  vertical-align: top;
+
    tr {
     border: 1px solid @light-gray;
   }
@@ -28,5 +31,9 @@ table {
 
   td.active-alignment {
     background: red;
+  }
+
+  tr.title {
+    border-bottom:5pt solid black;
   }
 }

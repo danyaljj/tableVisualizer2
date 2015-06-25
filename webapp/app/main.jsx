@@ -567,7 +567,8 @@ class TableVisualizer extends React.Component {
     ShowATable(table) {
         var rows = [];
         var self = this;
-        var title = <tr> {self.ShowARowOfTable(table.titleRow)} </tr>;
+        var klazz = 'title';
+        var title = <tr className={klazz}> {self.ShowARowOfTable(table.titleRow)} </tr>;
         rows.push(title);
         table.contentMatrix.forEach(function (row) {
             var goo = <tr> {self.ShowARowOfTable(row)} </tr>;
