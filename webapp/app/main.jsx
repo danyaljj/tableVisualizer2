@@ -496,7 +496,7 @@ var tablesEmpty =
 
 var questionEmpty = {
     "questionCons": [],
-    "options": []
+    "choices": []
 };
 
 
@@ -514,12 +514,80 @@ class TableVisualizer extends React.Component {
         };
     }
 
-    componentDidMount() {
+    ShowARowOfTable(row) {
+        var rows = [];
+        var self = this;
+        if (Array.isArray(row)) {
+            row.forEach(function (tableCell, i) {
+                var klazz = '';
+                if (tableCell[1].length > 0)
+                    klazz = "aligned";
+
+                var highlightAlignedCells = function () {
+                    self.setState({activeAlignments: tableCell[1]});
+                };
+
+                var unhighlight = function () {
+                    self.setState({activeAlignments: []});
+                };
+
+                var isActive = self.state.activeAlignments.filter(function (i) {
+                        return tableCell[1].indexOf(i) !== -1;
+                    }).length > 0;
+
+                if (isActive) {
+                    klazz += ' active-alignment';
+                }
+
+                rows.push(
+                    <td className={klazz} onMouseEnter={highlightAlignedCells} onMouseLeave={unhighlight} key={i}>
+                        {tableCell[0]}: {JSON.stringify(tableCell[1])}
+                    </td>
+                );
+            });
+        }
+        return rows;
+    }
+
+    ShowATable(table, tableIndex) {
+        var rows = [];
+        var self = this;
+        var klazz = 'title';
+        var title = <tr className={klazz} key="0"> {self.ShowARowOfTable(table.titleRow)} </tr>;
+        rows.push(title);
+        if (Array.isArray(table.contentMatrix)) {
+            table.contentMatrix.forEach(function (row, i) {
+                var goo = <tr key={i + 1}>{self.ShowARowOfTable(row)}</tr>;
+                rows.push(goo);
+            });
+        }
+        return (<table key={tableIndex}>{rows}</table> );
+    }
+
+    ShowTables(tables) {
+        var self = this;
+        var rows = [];
+        if (Array.isArray(tables)) {
+            tables.forEach(function (table, i) {
+                //rows.push(<h2>A table here  </h2> );
+                rows.push(self.ShowATable(table, i));
+            });
+        }
+
+        return (
+            <div>
+                {rows}
+            </div>
+        );
+    }
+
+    handleSubmit() {
+        this.setState({ loading: true });
         var text = this.refs.text.getDOMNode().value;
         Qwest.get('/api/hello?text=' + text).then(
             function (response) {
                 this.setState({
-                    text: 'Response received: ' + JSON.stringify(response),
+                    loading: false,
                     tables: JSON.parse(response.text).response.success.answers[0].analyses[1].analysis.alignment.tables,
                     question: JSON.parse(response.text).response.success.answers[0].analyses[1].analysis.alignment.question
                 });
@@ -527,104 +595,9 @@ class TableVisualizer extends React.Component {
         );
     }
 
-    ShowARowOfTable(row) {
-        var rows = [];
-        var self = this;
-        row.forEach(function (tableCell) {
-            window.console.log("This is a msg: ");
-            window.console.log(tableCell);
-            window.console.log(tableCell[1]);
-            window.console.log(tableCell[1].length);
-            var klazz = '';
-            if (tableCell[1].length > 0)
-                klazz = "aligned";
-
-            var highlightAlignedCells = function() {
-                self.setState({ activeAlignments: tableCell[1] });
-            };
-
-            var unhighlight = function() {
-                self.setState({ activeAlignments: [] });
-            };
-
-            var isActive = self.state.activeAlignments.filter(function(i) {
-                return tableCell[1].indexOf(i) !== -1;
-            }).length > 0;
-
-            if (isActive) {
-                klazz += ' active-alignment';
-            }
-
-            rows.push(
-                <td className={klazz} onMouseEnter={highlightAlignedCells} onMouseLeave={unhighlight}>
-                    {JSON.stringify(tableCell[0])}: {JSON.stringify(tableCell[1])}
-                </td>
-            );
-        });
-        return ( {rows} );
-    }
-
-    ShowATable(table) {
-        var rows = [];
-        var self = this;
-        var klazz = 'title';
-        var title = <tr className={klazz}> {self.ShowARowOfTable(table.titleRow)} </tr>;
-        rows.push(title);
-        table.contentMatrix.forEach(function (row) {
-            var goo = <tr> {self.ShowARowOfTable(row)} </tr>;
-            rows.push(goo);
-        });
-        return (<table> {rows} </table> );
-    }
-
-    ShowTables(tables) {
-        var self = this;
-        var rows = [];
-        tables.forEach(function (table) {
-            //rows.push(<h2>A table here  </h2> );
-            rows.push(self.ShowATable(table));
-        });
-
-        var tableRows = <div>{rows}</div>;
-
-        return (
-            <div>
-                {tableRows}
-            </div>
-        );
-    }
-
-    handleSubmit() {
-        //var response = this.state.response11;
-        //let textEl = this.refs.text.getDOMNode();
-        //window.console.log('TODO: Send request with text = ' + textEl.value);
-        //window.console.log(this.state.response11);
-        //window.console.log(JSON.stringify(this.state.response11));
-        this.componentDidMount();
-        //window.console.log( JSON.parse( JSON.stringify(output11) ) );
-        //window.console.log("result: ");
-        //window.console.log(  this.state.response );
-        window.console.log("question = ");
-        window.console.log(this.state.question);
-        window.console.log("tables = ");
-        window.console.log(this.state.tables);
-        this.render();
-
-        //window.console.log( JSON.parse( response ) )
-        //window.console.log( JSON.parse( JSON.stringify( questionGlobal ) ) )
-        //var jsonified = JSON.parse(this.state.response);
-        //window.console.log( jsonified );
-        //window.console.log( questionGlobal );
-        //var stringigfied1 = JSON.stringify(questionGlobal);
-        //window.console.log( stringigfied1 );
-        //var jsonfied2 = eval( stringigfied1 );
-        //window.console.log("result: ");
-        //window.console.log( JSON.parse(JSON.stringify(questionGlobal)) );
-    }
-
     render() {
         var qCons = this.ShowARowOfTable(this.state.question.questionCons);
-        var options = this.ShowARowOfTable(this.state.question.options);
+        var options = this.ShowARowOfTable(this.state.question.choices);
         var ts = this.ShowTables(this.state.tables);
         //var question = this.ShowARowOfTable(this.state.tables[0].contentMatrix[0]);
         //var question = this.ShowARowOfTable(this.state.question.questionCons);
@@ -660,24 +633,30 @@ class TableVisualizer extends React.Component {
         //    <h3> {JSON.stringify(this.state.tables[0].contentMatrix[0])} </h3>
         //</div>
 
+        var loading;
+        if (this.state.loading) {
+            loading = <span>Loading...</span>;
+        }
+
         return (
             <div>
                 <header className="padded"><h1>Multi-Table Alignment Visualization</h1></header>
                 <main className="text-center padded">
                     <section>
-                        Text: <input type="text" ref="text" name="text" defaultValue="Text"/> <br/>
+                        <label>Text:</label><input type="text" ref="text" name="text" defaultValue="Text"/> <br/>
                         <button onClick={this.handleSubmit.bind(this)}>Ask</button>
                     </section>
+                    {loading}
                     <section>
                         <h3> Question: </h3>
                         <table>
-                            <tr> {qCons} </tr>
+                            <tr>{qCons}</tr>
                         </table>
                         <h3> Options: </h3>
                         <table>
-                            <tr> {options} </tr>
+                            <tr>{options}</tr>
                         </table>
-                        <h3> Tables: </h3>
+                        <h3>Tables:</h3>
                         {ts}
                     </section>
                 </main>
