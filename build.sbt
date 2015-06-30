@@ -4,7 +4,7 @@ organization := "org.allenai.example"
 
 name := "webapp"
 
-description := "An example web application"
+description := "Visualizer for Table-ILP solver"
 
 enablePlugins(WebappPlugin)
 

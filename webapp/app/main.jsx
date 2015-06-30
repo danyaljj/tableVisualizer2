@@ -3,6 +3,25 @@
 const React = require('react');
 const Qwest = require('qwest');
 
+var exampleQueries = [
+    "In New York State, the longest period of daylight occurs during which month? (A) June  (B) March  (C) December  (D) September",
+    "In New York State, the shortest period of daylight occurs during which month? (A) December (B) June (C) March (D) September",
+    "How does the length of daylight in New York State change from summer to fall? (A) It decreases (B) It increases (C) It remains the same.",
+    "Sleet, rain, snow, and hail are forms of (A) erosion  (B) evaporation  (C) groundwater  (D) precipitation",
+    "Water freezing is an example of a (A) liquid changing to a solid  (B) solid changing to a liquid  (C) gas changing to a solid  (D) gas changing to a liquid",
+    "Which form of energy is needed to change water from a liquid to a gas? (A) heat  (B) mechanical  (C) chemical  (D) sound",
+    "Which type of energy does a person use to pedal a bicycle? (A) light  (B) sound  (C) mechanical  (D) electrical",
+    "Which object is the best conductor of electricity? (A) a wax crayon  (B) a plastic spoon  (C) a rubber eraser  (D) an iron nail",
+    "Base your answers on the information below. One hot, summer day it rained very heavily. After the rain, a plastic pan on a picnic table had 2 cm of rainwater in it. Four hours later, all the rainwater in the pan was gone. Which process caused the rainwater in the pan to disappear as it sat outside in the hot air? (A) condensation (B) evaporation (C) precipitation (D) erosion",
+    "Base your answers on the information below. One hot, summer day it rained very heavily. After the rain, a plastic pan on a picnic table had 2 cm of rainwater in it. Four hours later, all the rainwater in the pan was gone. If the day were cool instead of hot, the rainwater in the pan would have disappeared (A) slower (B) faster (C) in the same amount of time",
+    "Which characteristic can a human offspring inherit? (A) facial scar (B) blue eyes (C) long hair (D) broken leg",
+    "A duck's feathers are covered with a natural oil that keeps the duck dry. This is a special feature ducks have that helps them (A) feed their young (B) adapt to their environment (C) attract a mate (D) search for food",
+    "The functions of a plant’s roots are to support the plant and (A) make food (B) produce fruit (C) take in water and nutrients (D) aid in germination ",
+    "Which food is a fruit? (A) a potato (B) an onion (C) a carrot (D) a pumpkin ",
+    "In which environment would a white rabbit be best protected from predators? (A) a shady forest (B) a snowy field (C) a grassy lawn (D) a muddy riverbank",
+    "Frogs lay eggs that develop into tadpoles and then into adult frogs. This sequence of changes is an example of how living things (A) go through a life cycle (B) form a food web (C) act as a source of food (D) affect other parts of the ecosystem"
+];
+
 var output11 =
 {
     response: {
@@ -510,6 +529,7 @@ class TableVisualizer extends React.Component {
             BKColor: 'red',
             response: 'empty',
             response11: 'empty',
+            queryValue: "",
             activeAlignments: []
         };
     }
@@ -583,55 +603,37 @@ class TableVisualizer extends React.Component {
 
     handleSubmit() {
         this.setState({ loading: true });
-        var text = this.refs.text.getDOMNode().value;
+        var text = this.refs.query.getDOMNode().value;
+
         Qwest.get('/api/hello?text=' + text).then(
             function (response) {
                 this.setState({
                     loading: false,
-                    tables: JSON.parse(response.text).response.success.answers[0].analyses[1].analysis.alignment.tables,
-                    question: JSON.parse(response.text).response.success.answers[0].analyses[1].analysis.alignment.question
+                    tables: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.tables,
+                    question: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.question,
+                    bestChoiceScore: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.bestChoiceScore
                 });
             }.bind(this)
         );
     }
 
+    setSuggestedQuery(event) {
+        var query = exampleQueries[event.target.value];
+        var element = React.findDOMNode(this.refs.query);
+        element.setAttribute('value', query);
+    }
+
     render() {
+        var self = this;
+
+        var suggestions = exampleQueries.map(function (sugg, i) {
+            return <option key={i + 1} value={i}>{sugg}</option>;
+        });
+        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
+
         var qCons = this.ShowARowOfTable(this.state.question.questionCons);
         var options = this.ShowARowOfTable(this.state.question.choices);
         var ts = this.ShowTables(this.state.tables);
-        //var question = this.ShowARowOfTable(this.state.tables[0].contentMatrix[0]);
-        //var question = this.ShowARowOfTable(this.state.question.questionCons);
-
-        // <div>
-        //   <h3> {JSON.stringify(this.state.question.questionCons)} </h3>
-        // </div>
-        // <div>
-        //   <h3> {JSON.stringify(this.state.question)} </h3>
-        // </div>
-        // <div>
-        //   <h3> {JSON.stringify(this.state.tables[0].contentMatrix[0])} </h3>
-        // </div>
-
-        //onClick={this.handleLogin}
-        // onChange={this.handleFocusChange}/
-        // onChange={this.handleTextChange}
-
-        // <form>
-        //      <input type="text" name="text" placeholder="Text"  />
-        //      <input type="focus" name="focus" placeholder="Focus" />
-        //      <button type="button" >Login</button>
-        //    </form>
-
-
-        //<div>
-        //    <h3> {JSON.stringify(this.state.question.questionCons)} </h3>
-        //</div>
-        //<div>
-        //<h3> {JSON.stringify(this.state.question)} </h3>
-        //</div>
-        //<div>
-        //    <h3> {JSON.stringify(this.state.tables[0].contentMatrix[0])} </h3>
-        //</div>
 
         var loading;
         if (this.state.loading) {
@@ -643,10 +645,18 @@ class TableVisualizer extends React.Component {
                 <header className="padded"><h1>Multi-Table Alignment Visualization</h1></header>
                 <main className="text-center padded">
                     <section>
-                        <label>Text:</label><input type="text" ref="text" name="text" defaultValue="Text"/> <br/>
+                        <label>Text:</label><input type="text" name="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
                         <button onClick={this.handleSubmit.bind(this)}>Ask</button>
                     </section>
                     {loading}
+                    <br />
+                    <br />
+                    <br />
+                    <b> Suggestions: </b>
+                    <br />
+                    {suggestedQueries}
+                    <br />
+                    <br />
                     <section>
                         <h3> Question: </h3>
                         <table>
@@ -656,6 +666,10 @@ class TableVisualizer extends React.Component {
                         <table>
                             <tr>{options}</tr>
                         </table>
+                        <br/>
+                        <b> Solution Objective Value: {this.state.bestChoiceScore} </b>
+                        <br/>
+
                         <h3>Tables:</h3>
                         {ts}
                     </section>

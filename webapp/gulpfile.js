@@ -8,6 +8,6 @@ syrup.gulp.init(
    { compressJs: false, sourceMaps: false },
   // any instances of %TITLE% which exist in index.html will be replaced with the corresponding
   // value
-  { '%TITLE%': 'Sample Web Application' },
+  { '%TITLE%': 'Visualizer Main Page' },
   { build: '../public' }
 );
