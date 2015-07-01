@@ -604,8 +604,7 @@ class TableVisualizer extends React.Component {
     handleSubmit() {
         this.setState({ loading: true });
         var text = this.refs.query.getDOMNode().value;
-
-        Qwest.get('/api/hello?text=' + text).then(
+        Qwest.get('/api/hello', { text: text }, { timeout: 100000000, responseType: 'json' }).then(
             function (response) {
                 this.setState({
                     loading: false,
