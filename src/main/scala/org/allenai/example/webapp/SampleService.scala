@@ -5,7 +5,7 @@ import java.net.URLEncoder
 import org.allenai.common.Logging
 import spray.http.Uri.Path
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.io.Source
 
 import spray.routing._

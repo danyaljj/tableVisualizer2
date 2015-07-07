@@ -145,12 +145,12 @@ object VisualizationAnswer {
     Table(fullContentsAlignment.head, fullContentsAlignment.tail)
   }
 
-  def main(args: Array[String]) {
-    val text = Some("test question (a) x (b) y").get
-    val query = "http://localhost:8080/ask?text=" + URLEncoder.encode(text, "UTF-8")
-    println(query)
-    val html = Source.fromURL(query)
-    val s = html.mkString
-    println(s)
-  }
+  //  def main(args: Array[String]) {
+  //    val text = Some("test question (a) x (b) y").get
+  //    val query = "http://localhost:8080/ask?text=" + URLEncoder.encode(text, "UTF-8")
+  //    println(query)
+  //    val html = Source.fromURL(query)
+  //    val s = html.mkString
+  //    println(s)
+  //  }
 }
