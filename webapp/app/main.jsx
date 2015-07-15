@@ -719,14 +719,14 @@ class TableVisualizer extends React.Component {
             function (response) {
 
                 var responseMsg = JSON.parse(response.text).response.success.answers.filter(function(key) {
-                    return "alignment" in key.analyses[0].analysis
+                    return  key.analyses[0].analysis.ilpSolution != null
                 });
 
                 this.setState({
                     loading: false,
-                    tables: responseMsg[0].analyses[0].analysis.alignment.tableAlignments,
-                    question: responseMsg[0].analyses[0].analysis.alignment.questionAlignment,
-                    bestchoiceAlignmentscore: responseMsg[0].analyses[0].analysis.alignment.bestchoiceAlignmentscore
+                    tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
+                    question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
+                    bestchoiceAlignmentscore: responseMsg[0].analyses[0].analysis.ilpSolution.bestchoiceAlignmentscore
                 });
             }.bind(this)
         );
