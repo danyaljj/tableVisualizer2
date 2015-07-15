@@ -641,7 +641,8 @@ class TableVisualizer extends React.Component {
             response: 'empty',
             response11: 'empty',
             queryValue: "",
-            activeAlignments: []
+            activeAlignments: [],
+            panelState: 0
         };
     }
 
@@ -738,56 +739,87 @@ class TableVisualizer extends React.Component {
         element.setAttribute('value', query);
     }
 
-    render() {
+    queryTab() {
         var self = this;
-
         var suggestions = exampleQueries.map(function (sugg, i) {
             return <option key={i + 1} value={i}>{sugg}</option>;
         });
-        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
-
-        var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
-        var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
-        var ts = this.ShowTables(this.state.tables);
-
         var loading;
         if (this.state.loading) {
             loading = <span>Loading...</span>;
         }
+        var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
+        var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
+        var ts = this.ShowTables(this.state.tables);
+        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
 
+        return(
+            <section>
+                <section>
+                    <label>Text:</label><input type="text" name="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
+                    <button onClick={this.handleSubmit.bind(this)}>Ask</button>
+                </section>
+                {loading}
+                <br />
+                <br />
+                <br />
+                <b> Suggestions: </b>
+                <br />
+                {suggestedQueries}
+                <br />
+                <br />
+                <h3> Question: </h3>
+                <table>
+                    <tr>{qCons}</tr>
+                </table>
+                <h3> Options: </h3>
+                <table>
+                    <tr>{options}</tr>
+                </table>
+                <br/>
+                <b> Solution Objective Value: {this.state.bestchoiceAlignmentscore} </b>
+                <br/>
+                <h3>Tables:</h3>
+                {ts}
+            </section>
+        );
+    }
+
+    loadJSONTab() {
+        return (
+            <section>
+                TODO
+            </section>
+        );
+    }
+
+    handleSelectPanel(key) {
+        this.setState({panelState: key});
+    }
+
+    render() {
+        var TabbedArea = require('react-bootstrap').TabbedArea;
+        var TabPane = require('react-bootstrap').TabPane;
+        var queryTabContent = '';
+        if( this.state.panelState == 0 )
+            queryTabContent = this.queryTab();
+        var JSONTabContent = '';
+        if( this.state.panelState == 1 )
+            JSONTabContent = this.loadJSONTab();
         return (
             <div>
                 <header className="padded"><h1>Multi-Table Alignment Visualization</h1></header>
                 <main className="text-center padded">
-                    <section>
-                        <label>Text:</label><input type="text" name="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
-                        <button onClick={this.handleSubmit.bind(this)}>Ask</button>
-                    </section>
-                    {loading}
-                    <br />
-                    <br />
-                    <br />
-                    <b> Suggestions: </b>
-                    <br />
-                    {suggestedQueries}
-                    <br />
-                    <br />
-                    <section>
-                        <h3> Question: </h3>
-                        <table>
-                            <tr>{qCons}</tr>
-                        </table>
-                        <h3> Options: </h3>
-                        <table>
-                            <tr>{options}</tr>
-                        </table>
-                        <br/>
-                        <b> Solution Objective Value: {this.state.bestchoiceAlignmentscore} </b>
-                        <br/>
 
-                        <h3>Tables:</h3>
-                        {ts}
-                    </section>
+                    <TabbedArea defaultActiveKey={0}
+                                onSelect={this.handleSelectPanel.bind(this)}
+                                activeKey={this.state.panelState}>
+                        <TabPane eventKey={0} tab='Query single question'></TabPane>
+                        <TabPane eventKey={1} tab='Read JSON'></TabPane>
+                        <TabPane eventKey={2} tab='About' disabled={true}></TabPane>
+                    </TabbedArea>
+                    {queryTabContent}
+                    {JSONTabContent}
                 </main>
             </div>
         );

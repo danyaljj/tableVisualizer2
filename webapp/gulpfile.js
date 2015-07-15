@@ -2,6 +2,7 @@
 
 var gulp = require('gulp');
 var syrup = require('syrup');
+var reactBootstrap = require('react-bootstrap');
 
 syrup.gulp.init(
   gulp,
