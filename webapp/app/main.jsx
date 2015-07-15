@@ -178,7 +178,7 @@ var output11 =
                                 alignment: {
                                     tables: [
                                         {
-                                            titleRow: [
+                                            titleAlignments: [
                                                 {
                                                     string: "Country",
                                                     alignment: "11"
@@ -188,7 +188,7 @@ var output11 =
                                                     alignment: "10"
                                                 }
                                             ],
-                                            contentMatrix: [
+                                            contentAlignments: [
                                                 [
                                                     {
                                                         string: "USA",
@@ -212,7 +212,7 @@ var output11 =
                                             ]
                                         },
                                         {
-                                            titleRow: [
+                                            titleAlignments: [
                                                 {
                                                     string: "Season",
                                                     alignment: "4"
@@ -222,7 +222,7 @@ var output11 =
                                                     alignment: "4,9,11"
                                                 }
                                             ],
-                                            contentMatrix: [
+                                            contentAlignments: [
                                                 [
                                                     {
                                                         string: "Spring",
@@ -347,7 +347,7 @@ var output11 =
                                         }
                                     ],
                                     question: {
-                                        questionCons: [
+                                        qConsAlignments: [
                                             {
                                                 string: "In",
                                                 alignment: "1"
@@ -543,7 +543,7 @@ var output11 =
 var colors = ['white', 'gray', 'red', 'maroon', 'yellow', 'olive', 'lime', 'green',
     'aqua', 'teal', 'blue', 'navy', 'fuchsia', 'purple'];
 var questionGlobal = {
-    "questionCons": [{
+    "qConsAlignments": [{
         "string": "In",
         "alignment": 2
     }, {"string": "New York State", "alignment": 1}, {
@@ -568,18 +568,18 @@ var questionGlobal = {
 var tablesGlobal2 =
     [
         {
-            "titleRow": [{"string": "Country", "alignment": -1}, {
+            "titleAlignments": [{"string": "Country", "alignment": -1}, {
                 "string": "Hemisphere",
                 "alignment": 2
             }],
-            "contentMatrix": [[{"string": "USA", "alignment": -1}, {
+            "contentAlignments": [[{"string": "USA", "alignment": -1}, {
                 "string": "North",
                 "alignment": 2
             }], [{"string": "Brazil", "alignment": 0}, {"string": "South", "alignment": 0}]]
         },
         {
-            "titleRow": [{"string": "Season", "alignment": 0}, {"string": "Month", "alignment": 0}],
-            "contentMatrix": [[{"string": "Spring", "alignment": -1}, {
+            "titleAlignments": [{"string": "Season", "alignment": 0}, {"string": "Month", "alignment": 0}],
+            "contentAlignments": [[{"string": "Spring", "alignment": -1}, {
                 "string": "March",
                 "alignment": -1
             }], [{"string": "Spring", "alignment": 1}, {
@@ -619,14 +619,14 @@ var tablesGlobal2 =
 var tablesEmpty =
     [
         {
-            "titleRow": [],
-            "contentMatrix": [[]]
+            "titleAlignments": [],
+            "contentAlignments": [[]]
         }
     ];
 
 var questionEmpty = {
-    "questionCons": [],
-    "choices": []
+    "qConsAlignments": [],
+    "choiceAlignments": []
 };
 
 
@@ -684,10 +684,10 @@ class TableVisualizer extends React.Component {
         var rows = [];
         var self = this;
         var klazz = 'title';
-        var title = <tr className={klazz} key="0"> {self.ShowARowOfTable(table.titleRow)} </tr>;
+        var title = <tr className={klazz} key="0"> {self.ShowARowOfTable(table.titleAlignments)} </tr>;
         rows.push(title);
-        if (Array.isArray(table.contentMatrix)) {
-            table.contentMatrix.forEach(function (row, i) {
+        if (Array.isArray(table.contentAlignments)) {
+            table.contentAlignments.forEach(function (row, i) {
                 var goo = <tr key={i + 1}>{self.ShowARowOfTable(row)}</tr>;
                 rows.push(goo);
             });
@@ -717,11 +717,16 @@ class TableVisualizer extends React.Component {
         var text = this.refs.query.getDOMNode().value;
         Qwest.get('/api/hello', { text: text }, { timeout: 100000000, responseType: 'json' }).then(
             function (response) {
+
+                var responseMsg = JSON.parse(response.text).response.success.answers.filter(function(key) {
+                    return "alignment" in key.analyses[0].analysis
+                });
+
                 this.setState({
                     loading: false,
-                    tables: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.tables,
-                    question: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.question,
-                    bestChoiceScore: JSON.parse(response.text).response.success.answers[0].analyses[0].analysis.alignment.bestChoiceScore
+                    tables: responseMsg[0].analyses[0].analysis.alignment.tableAlignments,
+                    question: responseMsg[0].analyses[0].analysis.alignment.questionAlignment,
+                    bestchoiceAlignmentscore: responseMsg[0].analyses[0].analysis.alignment.bestchoiceAlignmentscore
                 });
             }.bind(this)
         );
@@ -741,8 +746,8 @@ class TableVisualizer extends React.Component {
         });
         var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
 
-        var qCons = this.ShowARowOfTable(this.state.question.questionCons);
-        var options = this.ShowARowOfTable(this.state.question.choices);
+        var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
+        var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
         var ts = this.ShowTables(this.state.tables);
 
         var loading;
@@ -777,7 +782,7 @@ class TableVisualizer extends React.Component {
                             <tr>{options}</tr>
                         </table>
                         <br/>
-                        <b> Solution Objective Value: {this.state.bestChoiceScore} </b>
+                        <b> Solution Objective Value: {this.state.bestchoiceAlignmentscore} </b>
                         <br/>
 
                         <h3>Tables:</h3>
