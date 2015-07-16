@@ -740,6 +740,7 @@ class TableVisualizer extends React.Component {
     }
 
     queryTab() {
+        var Input = require('react-bootstrap').Input;
         var self = this;
         var suggestions = exampleQueries.map(function (sugg, i) {
             return <option key={i + 1} value={i}>{sugg}</option>;
@@ -756,7 +757,7 @@ class TableVisualizer extends React.Component {
         return(
             <section>
                 <section>
-                    <label>Text:</label><input type="text" name="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
+                    <label>Text:</label><input type="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
                     <button onClick={this.handleSubmit.bind(this)}>Ask</button>
                 </section>
                 {loading}
@@ -786,9 +787,26 @@ class TableVisualizer extends React.Component {
     }
 
     loadJSONTab() {
+        var questions = '';
+        //var questions = exampleQueries.map(function (sugg, i) {
+        //    return <option key={i + 1} value={i}>{sugg}</option>;
+        //});
+        var Input = require('react-bootstrap').Input;
+        var Panel = require('react-bootstrap').Panel;
+        var Button = require('react-bootstrap').Button;
+        var divStyle = {
+            marginLeft: '40%'
+        };
         return (
             <section>
-                TODO
+                <Panel header='JSON Laod Panel'>
+                    <div style={divStyle}>
+                        <Input type='file' accept='.json' ref='fileUpload'/>
+                    </div>
+                    <Button>Default</Button>
+                    <br />
+                    <select> {questions} </select>
+                </Panel>
             </section>
         );
     }
