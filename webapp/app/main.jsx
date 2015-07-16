@@ -642,7 +642,15 @@ class TableVisualizer extends React.Component {
             response11: 'empty',
             queryValue: "",
             activeAlignments: [],
-            panelState: 0
+            panelState: 0,
+            jsonLoadButton: 'Read File Content',
+            inputJSONFile: '',
+            questionsInJSONFile: [],
+            questionIdxJSONFile: 0,
+            searchStats: [],
+            problemStats: [],
+            timingStats: [],
+            solutionQuality: []
         };
     }
 
@@ -672,7 +680,8 @@ class TableVisualizer extends React.Component {
                 }
 
                 rows.push(
-                    <td className={klazz} onMouseEnter={highlightAlignedCells} onMouseLeave={unhighlight} key={i}>
+                    <td className={klazz} onMouseEnter={highlightAlignedCells}
+                        onMouseLeave={unhighlight} key={i}>
                         {tableCell[0]}: {JSON.stringify(tableCell[1])}
                     </td>
                 );
@@ -681,11 +690,43 @@ class TableVisualizer extends React.Component {
         return rows;
     }
 
+    ShowARowOfASimpleTable(row) {
+        var rows = [];
+        var self = this;
+        if (Array.isArray(row)) {
+            row.forEach(function (tableCell, i) {
+                rows.push(
+                    <td key={i}>
+                        {tableCell}
+                    </td>
+                );
+            });
+        }
+        return rows;
+    }
+
+    ShowASimpleTable(table, tableIndex) {
+        var rows = [];
+        var self = this;
+        var klazz = 'title';
+        var title = <tr className={klazz}
+                        key="0"> {self.ShowARowOfASimpleTable(table[0])} </tr>;
+        rows.push(title);
+        if (Array.isArray(table)) {
+            table.splice(1,table.length).forEach(function (row, i) {
+                var goo = <tr key={i + 1}>{self.ShowARowOfASimpleTable(row)}</tr>;
+                rows.push(goo);
+            });
+        }
+        return (<table key={tableIndex}>{rows}</table> );
+    }
+
     ShowATable(table, tableIndex) {
         var rows = [];
         var self = this;
         var klazz = 'title';
-        var title = <tr className={klazz} key="0"> {self.ShowARowOfTable(table.titleAlignments)} </tr>;
+        var title = <tr className={klazz}
+                        key="0"> {self.ShowARowOfTable(table.titleAlignments)} </tr>;
         rows.push(title);
         if (Array.isArray(table.contentAlignments)) {
             table.contentAlignments.forEach(function (row, i) {
@@ -697,40 +738,117 @@ class TableVisualizer extends React.Component {
     }
 
     ShowTables(tables) {
+        var Panel = require('react-bootstrap').Panel;
+        var PanelGroup = require('react-bootstrap').PanelGroup;
+
         var self = this;
         var rows = [];
         if (Array.isArray(tables)) {
             tables.forEach(function (table, i) {
-                //rows.push(<h2>A table here  </h2> );
-                rows.push(self.ShowATable(table, i));
+                var panelName = "Panel " + i;
+                rows.push(<Panel header={panelName}
+                                 eventKey={i}> {self.ShowATable(table, i)}</Panel>);
             });
         }
 
         return (
             <div>
-                {rows}
+                <PanelGroup defaultActiveKey='2' accordion>
+                    {rows}
+                </PanelGroup>
+            </div>
+        );
+    }
+
+    ShowSimpleTables(tables) {
+        var Panel = require('react-bootstrap').Panel;
+        var PanelGroup = require('react-bootstrap').PanelGroup;
+
+        var self = this;
+        var rows = [];
+        if (Array.isArray(tables)) {
+            tables.forEach(function (table, i) {
+                var panelName = "Panel " + i;
+                rows.push(self.ShowASimpleTable(table, i));
+            });
+        }
+
+        return (
+            <div>
+                <PanelGroup defaultActiveKey='2' accordion>
+                    <Panel header="Statistics" eventKey="0">
+                        {rows}
+                    </Panel>
+                </PanelGroup>
+            </div>
+        );
+    }
+
+    getStatisticsTable() {
+        var Table = require('react-bootstrap').Table;
+        var searchStats = this.state.searchStats;
+        var problemStats = this.state.problemStats;
+        var timingStats = this.state.timingStats;
+        var solutionQuality = this.state.solutionQuality;
+
+        //console.log('searchStats = ');
+        //console.log(searchStats);
+        //console.log('searchStatsTable = ');
+        //console.log(searchStatsTable);
+        var searchStatsTable = this.convertMapToArray(searchStats);
+        searchStatsTable.unshift(["Parameters", "Values"]);
+        var problemStatsTable = this.convertMapToArray(problemStats);
+        problemStatsTable.unshift(["Parameters", "Values"]);
+        var timingStatsTable = this.convertMapToArray(timingStats);
+        timingStatsTable.unshift(["Parameters", "Values"]);
+        var solutionQualityTable = this.convertMapToArray(solutionQuality);
+        solutionQualityTable.unshift(["Parameters", "Values"]);
+        var allTables = [searchStatsTable, problemStatsTable, timingStatsTable, solutionQualityTable];
+        //var stat = this.ShowASimpleTable(searchStatsTable);
+        var stat = this.ShowSimpleTables(allTables);
+        //console.log('stat = ');
+        //console.log(stat);
+
+        var tableStyle = {
+            marginLeft: "30%",
+            width: "30%"
+        };
+
+        // ShowSimpleTables
+
+        return (
+            <div>
+                {stat}
             </div>
         );
     }
 
     handleSubmit() {
-        this.setState({ loading: true });
+        this.setState({loading: true});
         var text = this.refs.query.getDOMNode().value;
-        Qwest.get('/api/hello', { text: text }, { timeout: 100000000, responseType: 'json' }).then(
+        Qwest.get('/api/hello', {text: text}, {timeout: 100000000, responseType: 'json'}).then(
             function (response) {
-
-                var responseMsg = JSON.parse(response.text).response.success.answers.filter(function(key) {
-                    return  key.analyses[0].analysis.ilpSolution != null
-                });
-
-                this.setState({
-                    loading: false,
-                    tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
-                    question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
-                    bestchoiceAlignmentscore: responseMsg[0].analyses[0].analysis.ilpSolution.bestchoiceAlignmentscore
-                });
+                this.processResponse(JSON.parse(response.text));
             }.bind(this)
         );
+    }
+
+    processResponse(r) {
+        console.log('r = ' + r);
+        var responseMsg = r.response.success.answers.filter(function (key) {
+            return key.analyses[0].analysis.ilpSolution != null
+        });
+        console.log("responseMsg = " + responseMsg);
+
+        this.setState({
+            loading: false,
+            tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
+            question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
+            searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
+            problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
+            timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
+            solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality
+        });
     }
 
     setSuggestedQuery(event) {
@@ -742,20 +860,51 @@ class TableVisualizer extends React.Component {
     queryTab() {
         var Input = require('react-bootstrap').Input;
         var self = this;
-        var suggestions = exampleQueries.map(function (sugg, i) {
-            return <option key={i + 1} value={i}>{sugg}</option>;
-        });
-        var loading;
-        if (this.state.loading) {
-            loading = <span>Loading...</span>;
-        }
         var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
         var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
         var ts = this.ShowTables(this.state.tables);
-        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
-
-        return(
+        var statistics = this.getStatisticsTable();
+        return (
             <section>
+                <br />
+                {statistics}
+                <br />
+
+                <h3> Question: </h3>
+                <table>
+                    <tr>{qCons}</tr>
+                </table>
+                <h3> Options: </h3>
+                <table>
+                    <tr>{options}</tr>
+                </table>
+                <br/>
+
+                <h3>Tables:</h3>
+                {ts}
+            </section>
+        );
+    }
+
+    convertMapToArray(inputMap) {
+        var tupleArrayOut = Object.keys(inputMap).map(function (e, i) {
+            return [e, inputMap[e]];
+        });
+        return tupleArrayOut;
+    }
+
+    controllerQueryPanel() {
+        var loading;
+        var self = this;
+        var suggestions = exampleQueries.map(function (sugg, i) {
+            return <option key={i + 1} value={i}>{sugg}</option>;
+        });
+        if (this.state.loading) {
+            loading = <span>Loading...</span>;
+        }
+        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
+        return (
+            <div>
                 <section>
                     <label>Text:</label><input type="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
                     <button onClick={this.handleSubmit.bind(this)}>Ask</button>
@@ -769,25 +918,24 @@ class TableVisualizer extends React.Component {
                 {suggestedQueries}
                 <br />
                 <br />
-                <h3> Question: </h3>
-                <table>
-                    <tr>{qCons}</tr>
-                </table>
-                <h3> Options: </h3>
-                <table>
-                    <tr>{options}</tr>
-                </table>
-                <br/>
-                <b> Solution Objective Value: {this.state.bestchoiceAlignmentscore} </b>
-                <br/>
-                <h3>Tables:</h3>
-                {ts}
-            </section>
+            </div>
+        );
+    }
+
+    readAlignmentFromJSONFile() {
+        var queryTabContent = this.queryTab();
+        return (
+            <div>
+                {queryTabContent}
+            </div>
         );
     }
 
     loadJSONTab() {
-        var questions = '';
+        var questions = this.state.questionsInJSONFile.map(function (sugg, i) {
+            return <option key={i + 1} value={i}>{sugg[0]}</option>;
+        });
+
         //var questions = exampleQueries.map(function (sugg, i) {
         //    return <option key={i + 1} value={i}>{sugg}</option>;
         //});
@@ -797,17 +945,74 @@ class TableVisualizer extends React.Component {
         var divStyle = {
             marginLeft: '40%'
         };
+        var alignmentFromJSONFile = this.readAlignmentFromJSONFile();
         return (
             <section>
-                <Panel header='JSON Laod Panel'>
+                <Panel header='JSON Load Panel'>
                     <div style={divStyle}>
-                        <Input type='file' accept='.json' ref='fileUpload'/>
+                        <Input type='file' accept='.json' ref='fileUpload' onChange={this.handleFileInputChange.bind(this)}/>
                     </div>
-                    <Button>Default</Button>
+
+                    <Button onClick={this.handleJSONLoadButton.bind(this)}>{this.state.jsonLoadButton}</Button>
                     <br />
-                    <select> {questions} </select>
+                    <br />
+                    <select onChange={this.handleSelectChange.bind(this)}> {questions} </select>
                 </Panel>
+                {alignmentFromJSONFile}
             </section>
+        );
+    }
+
+    handleJSONLoadButton() {
+        if( this.state.jsonLoadButton === "Read File Content" ) {
+            // load the file content
+            console.log(this.refs.fileUpload.getInputDOMNode());
+            console.log(this.refs.fileUpload.getInputDOMNode().files);
+            var reader = new FileReader();
+            var file = this.refs.fileUpload.getInputDOMNode().files[0];
+            var self = this;
+            reader.onload = function(upload) {
+                self.setState({ inputJSONFile: JSON.parse(upload.target.result) });
+                console.log('inputJSONFile = ');
+                console.log(self.state.inputJSONFile);
+
+                // populate questions into options
+                var tmp = self.state.inputJSONFile.evaluation.examEvaluations.map(function(e, i){
+                    return e.evaluatedAnswers.map( function(e2, j) {
+                        return [e2.key.question, i, j];
+                    })
+                });
+                var merged = [];
+                merged = merged.concat.apply(merged, tmp);
+                console.log(merged);
+                self.setState({ questionsInJSONFile: merged });
+            };
+            reader.readAsText(file);
+        }
+        else {
+            // read the content and add it to the strings
+            var questionString = '';
+            if( Array.isArray(this.state.questionsInJSONFile) && this.state.questionsInJSONFile.length > 0 ) {
+                var q = this.state.questionsInJSONFile[this.state.questionIdxJSONFile];
+                console.log(this.state.questionsInJSONFile[this.state.questionIdxJSONFile]);
+                var i = q[1];
+                var j = q[2];
+                this.processResponse(this.state.inputJSONFile.evaluation.examEvaluations[i].evaluatedAnswers[j].rawResponse);
+            }
+        }
+    }
+
+    handleFileInputChange() {
+        this.setState({jsonLoadButton: "Read File Content"});
+    }
+
+    handleSelectChange(event) {
+        console.log(event.target.value);
+        this.setState(
+            {
+                jsonLoadButton: "Show Alignment",
+                questionIdxJSONFile: event.target.value
+            }
         );
     }
 
@@ -819,8 +1024,11 @@ class TableVisualizer extends React.Component {
         var TabbedArea = require('react-bootstrap').TabbedArea;
         var TabPane = require('react-bootstrap').TabPane;
         var queryTabContent = '';
-        if( this.state.panelState == 0 )
+        var controllerQueryPanelContent = '';
+        if( this.state.panelState == 0 ) {
             queryTabContent = this.queryTab();
+            controllerQueryPanelContent = this.controllerQueryPanel();
+        }
         var JSONTabContent = '';
         if( this.state.panelState == 1 )
             JSONTabContent = this.loadJSONTab();
@@ -836,6 +1044,7 @@ class TableVisualizer extends React.Component {
                         <TabPane eventKey={1} tab='Read JSON'></TabPane>
                         <TabPane eventKey={2} tab='About' disabled={true}></TabPane>
                     </TabbedArea>
+                    {controllerQueryPanelContent}
                     {queryTabContent}
                     {JSONTabContent}
                 </main>
