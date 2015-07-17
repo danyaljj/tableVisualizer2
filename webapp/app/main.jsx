@@ -650,7 +650,15 @@ class TableVisualizer extends React.Component {
             searchStats: [],
             problemStats: [],
             timingStats: [],
-            solutionQuality: []
+            solutionQuality: [],
+
+            // aggregate
+            searchStatsAgg: {"nNodes": 0, "nLPIterations": 0, "maxDepth": 0},
+            problemStatsAgg: {"nOrigVars": 0, "nOrigCons": 0, "nVars": 0, "nCons": 0},
+            timingStatsAgg: {"modelCreationTime": 0, "presolveTime": 0,
+                "solveTime": 0, "totalTime": 0
+            },
+            solutionQualityAgg: {"lb": 0, "ub": 0, "optgap": 0}
         };
     }
 
@@ -760,7 +768,7 @@ class TableVisualizer extends React.Component {
         );
     }
 
-    ShowSimpleTables(tables) {
+    ShowSimpleTables(tables, panelName) {
         var Panel = require('react-bootstrap').Panel;
         var PanelGroup = require('react-bootstrap').PanelGroup;
 
@@ -776,7 +784,7 @@ class TableVisualizer extends React.Component {
         return (
             <div>
                 <PanelGroup defaultActiveKey='2' accordion>
-                    <Panel header="Statistics" eventKey="0">
+                    <Panel header={panelName} eventKey="0">
                         {rows}
                     </Panel>
                 </PanelGroup>
@@ -784,13 +792,26 @@ class TableVisualizer extends React.Component {
         );
     }
 
-    getStatisticsTable() {
+    getStatisticsTable(isItAggregate, panelName) {
         var Table = require('react-bootstrap').Table;
-        var searchStats = this.state.searchStats;
-        var problemStats = this.state.problemStats;
-        var timingStats = this.state.timingStats;
-        var solutionQuality = this.state.solutionQuality;
 
+        var searchStats = {};
+        var problemStats = {};
+        var timingStats = {};
+        var solutionQuality = {};
+
+        if( isItAggregate == 0 ) {
+            searchStats = this.state.searchStats;
+            problemStats = this.state.problemStats;
+            timingStats = this.state.timingStats;
+            solutionQuality = this.state.solutionQuality;
+        }
+        else {
+            searchStats = this.state.searchStatsAgg;
+            problemStats = this.state.problemStatsAgg;
+            timingStats = this.state.timingStatsAgg;
+            solutionQuality = this.state.solutionQualityAgg;
+        }
         //console.log('searchStats = ');
         //console.log(searchStats);
         //console.log('searchStatsTable = ');
@@ -805,7 +826,7 @@ class TableVisualizer extends React.Component {
         solutionQualityTable.unshift(["Parameters", "Values"]);
         var allTables = [searchStatsTable, problemStatsTable, timingStatsTable, solutionQualityTable];
         //var stat = this.ShowASimpleTable(searchStatsTable);
-        var stat = this.ShowSimpleTables(allTables);
+        var stat = this.ShowSimpleTables(allTables, panelName);
         //console.log('stat = ');
         //console.log(stat);
 
@@ -813,8 +834,6 @@ class TableVisualizer extends React.Component {
             marginLeft: "30%",
             width: "30%"
         };
-
-        // ShowSimpleTables
 
         return (
             <div>
@@ -831,6 +850,64 @@ class TableVisualizer extends React.Component {
                 this.processResponse(JSON.parse(response.text));
             }.bind(this)
         );
+    }
+
+    normalizeAggregateNumbers(maxInstances) {
+        var searchStatsTmp = this.state.searchStatsAgg;
+        var problemStatsTmp = this.state.problemStatsAgg;
+        var timingStatsTmp = this.state.timingStatsAgg;
+        var solutionQualityTmp = this.state.solutionQualityAgg;
+
+        // normalize
+        Object.keys(searchStatsTmp).forEach( function(key){ searchStatsTmp[key] = searchStatsTmp[key] / maxInstances });
+        Object.keys(problemStatsTmp).forEach( function(key){ problemStatsTmp[key] = problemStatsTmp[key] / maxInstances });
+        Object.keys(timingStatsTmp).forEach( function(key){ timingStatsTmp[key] = timingStatsTmp[key] / maxInstances });
+        Object.keys(solutionQualityTmp).forEach( function(key){ solutionQualityTmp[key] = solutionQualityTmp[key] / maxInstances });
+
+        this.setState({
+            searchStatsAgg: searchStatsTmp,
+            problemStatsAgg: problemStatsTmp,
+            timingStatsAgg: timingStatsTmp,
+            solutionQualityAgg: solutionQualityTmp
+        });
+    }
+
+
+    addTheAggregateVariables(r) {
+        var responseMsg = r.response.success.answers.filter(function (key) {
+            return key.analyses[0].analysis.ilpSolution != null
+        });
+
+        var searchStatsTmp = this.state.searchStatsAgg;
+        Object.keys(searchStatsTmp).forEach( function(key){
+            searchStatsTmp[key] = searchStatsTmp[key] +
+                responseMsg[0].analyses[0].analysis.ilpSolution.searchStats[key]
+        });
+
+        var problemStatsTmp = this.state.problemStatsAgg;
+        Object.keys(problemStatsTmp).forEach( function(key){
+            problemStatsTmp[key] = problemStatsTmp[key] +
+                responseMsg[0].analyses[0].analysis.ilpSolution.problemStats[key]
+        });
+
+        var timingStatsTmp = this.state.timingStatsAgg;
+        Object.keys(timingStatsTmp).forEach( function(key){
+            timingStatsTmp[key] = timingStatsTmp[key] +
+                responseMsg[0].analyses[0].analysis.ilpSolution.timingStats[key]
+        });
+
+        var solutionQualityTmp = this.state.solutionQualityAgg;
+        Object.keys(solutionQualityTmp).forEach( function(key){
+            solutionQualityTmp[key] = solutionQualityTmp[key] +
+                responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality[key]
+        });
+
+        this.setState({
+            searchStatsAgg: searchStatsTmp,
+            problemStatsAgg: problemStatsTmp,
+            timingStatsAgg: timingStatsTmp,
+            solutionQualityAgg: solutionQualityTmp
+        });
     }
 
     processResponse(r) {
@@ -863,7 +940,7 @@ class TableVisualizer extends React.Component {
         var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
         var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
         var ts = this.ShowTables(this.state.tables);
-        var statistics = this.getStatisticsTable();
+        var statistics = this.getStatisticsTable(0, "Per-Instance Statistics");
         return (
             <section>
                 <br />
@@ -946,31 +1023,32 @@ class TableVisualizer extends React.Component {
             marginLeft: '40%'
         };
         var alignmentFromJSONFile = this.readAlignmentFromJSONFile();
+        var statistics = this.getStatisticsTable(1, "Overall Statistics");
         return (
             <section>
                 <Panel header='JSON Load Panel'>
                     <div style={divStyle}>
                         <Input type='file' accept='.json' ref='fileUpload' onChange={this.handleFileInputChange.bind(this)}/>
                     </div>
-
                     <Button onClick={this.handleJSONLoadButton.bind(this)}>{this.state.jsonLoadButton}</Button>
                     <br />
                     <br />
                     <select onChange={this.handleSelectChange.bind(this)}> {questions} </select>
                 </Panel>
+                {statistics}
                 {alignmentFromJSONFile}
             </section>
         );
     }
 
     handleJSONLoadButton() {
+        var self = this;
         if( this.state.jsonLoadButton === "Read File Content" ) {
             // load the file content
             console.log(this.refs.fileUpload.getInputDOMNode());
             console.log(this.refs.fileUpload.getInputDOMNode().files);
             var reader = new FileReader();
             var file = this.refs.fileUpload.getInputDOMNode().files[0];
-            var self = this;
             reader.onload = function(upload) {
                 self.setState({ inputJSONFile: JSON.parse(upload.target.result) });
                 console.log('inputJSONFile = ');
@@ -986,6 +1064,23 @@ class TableVisualizer extends React.Component {
                 merged = merged.concat.apply(merged, tmp);
                 console.log(merged);
                 self.setState({ questionsInJSONFile: merged });
+
+                self.state.inputJSONFile.evaluation.examEvaluations.forEach(function(e1){
+                    e1.evaluatedAnswers.forEach(function(e2) {
+                        self.addTheAggregateVariables(e2.rawResponse);
+                    });
+                });
+
+                self.normalizeAggregateNumbers(merged.length);
+
+                //console.log('searchStatsAgg = ');
+                //console.log(self.state.searchStatsAgg);
+                //console.log('problemStatsAgg = ');
+                //console.log(self.state.problemStatsAgg);
+                //console.log('timingStatsAgg = ');
+                //console.log(self.state.timingStatsAgg);
+                //console.log('solutionQualityAgg = ');
+                //console.log(self.state.solutionQualityAgg);
             };
             reader.readAsText(file);
         }
