@@ -145,18 +145,23 @@ class TableVisualizer extends React.Component {
             inputJSONFile: '',
             questionsInJSONFile: [],
             questionIdxJSONFile: 0,
+
+            // stats
             searchStats: [],
             problemStats: [],
             timingStats: [],
             solutionQuality: [],
 
-            // aggregate
+            // aggregate stats
             searchStatsAgg: {"nNodes": 0, "nLPIterations": 0, "maxDepth": 0},
             problemStatsAgg: {"nOrigVars": 0, "nOrigCons": 0, "nVars": 0, "nCons": 0},
             timingStatsAgg: {"modelCreationTime": 0, "presolveTime": 0,
                 "solveTime": 0, "totalTime": 0
             },
-            solutionQualityAgg: {"lb": 0, "ub": 0, "optgap": 0}
+            solutionQualityAgg: {"lb": 0, "ub": 0, "optgap": 0},
+
+            // weights
+            variableWeights: []
         };
     }
 
@@ -219,7 +224,7 @@ class TableVisualizer extends React.Component {
                         key="0"> {self.ShowARowOfASimpleTable(table[0])} </tr>;
         rows.push(title);
         if (Array.isArray(table)) {
-            table.splice(1,table.length).forEach(function (row, i) {
+            table.slice(1).forEach(function (row, i) {
                 var goo = <tr key={i + 1}>{self.ShowARowOfASimpleTable(row)}</tr>;
                 rows.push(goo);
             });
@@ -310,10 +315,6 @@ class TableVisualizer extends React.Component {
             timingStats = this.state.timingStatsAgg;
             solutionQuality = this.state.solutionQualityAgg;
         }
-        //console.log('searchStats = ');
-        //console.log(searchStats);
-        //console.log('searchStatsTable = ');
-        //console.log(searchStatsTable);
         var searchStatsTable = this.convertMapToArray(searchStats);
         searchStatsTable.unshift(["Parameters", "Values"]);
         var problemStatsTable = this.convertMapToArray(problemStats);
@@ -322,12 +323,11 @@ class TableVisualizer extends React.Component {
         timingStatsTable.unshift(["Parameters", "Values"]);
         var solutionQualityTable = this.convertMapToArray(solutionQuality);
         solutionQualityTable.unshift(["Parameters", "Values"]);
-        var allTables = [searchStatsTable, problemStatsTable, timingStatsTable, solutionQualityTable];
-        //var stat = this.ShowASimpleTable(searchStatsTable);
+        var variableWeights = this.state.variableWeights.slice();
+        variableWeights.unshift(["AlignmentIndex", "Weight"]);
+        var allTables = [searchStatsTable, problemStatsTable, timingStatsTable,
+            solutionQualityTable, variableWeights];
         var stat = this.ShowSimpleTables(allTables, panelName);
-        //console.log('stat = ');
-        //console.log(stat);
-
         var tableStyle = {
             marginLeft: "30%",
             width: "30%"
@@ -345,9 +345,35 @@ class TableVisualizer extends React.Component {
         var text = this.refs.query.getDOMNode().value;
         Qwest.get('/api/hello', {text: text}, {timeout: 100000000, responseType: 'json'}).then(
             function (response) {
-                this.processResponse(JSON.parse(response.text));
+                var obj = JSON.parse(response.text);
+                this.processResponse(obj);
             }.bind(this)
         );
+    }
+
+    processResponse(r) {
+        var responseMsg = r.response.success.answers.filter(function (key) {
+            return key.analyses[0].analysis.ilpSolution != null
+        });
+
+        this.setState({
+            loading: false,
+            tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
+            question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
+            searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
+            problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
+            timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
+            solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality
+        });
+
+        // if it contains variable weights
+        if( "alignmentWeights" in responseMsg[0].analyses[0].analysis.ilpSolution ) {
+            this.setState({variableWeights: responseMsg[0].analyses[0].analysis.ilpSolution.alignmentWeights});
+            console.log('alignmentWeights inside processResponse: ' );
+            console.log(responseMsg[0].analyses[0].analysis.ilpSolution.alignmentWeights);
+        }
+        //else
+        //    this.setState({variableWeights: []});
     }
 
     normalizeAggregateNumbers(maxInstances) {
@@ -408,24 +434,6 @@ class TableVisualizer extends React.Component {
             problemStatsAgg: problemStatsTmp,
             timingStatsAgg: timingStatsTmp,
             solutionQualityAgg: solutionQualityTmp
-        });
-    }
-
-    processResponse(r) {
-        console.log('r = ' + r);
-        var responseMsg = r.response.success.answers.filter(function (key) {
-            return key.analyses[0].analysis.ilpSolution != null
-        });
-        console.log("responseMsg = " + responseMsg);
-
-        this.setState({
-            loading: false,
-            tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
-            question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
-            searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
-            problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
-            timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
-            solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality
         });
     }
 
@@ -514,9 +522,6 @@ class TableVisualizer extends React.Component {
             return <option key={i + 1} value={i}>{sugg[0]}</option>;
         });
 
-        //var questions = exampleQueries.map(function (sugg, i) {
-        //    return <option key={i + 1} value={i}>{sugg}</option>;
-        //});
         var Input = require('react-bootstrap').Input;
         var Panel = require('react-bootstrap').Panel;
         var Button = require('react-bootstrap').Button;
@@ -573,15 +578,6 @@ class TableVisualizer extends React.Component {
                 });
 
                 self.normalizeAggregateNumbers(merged.length);
-
-                //console.log('searchStatsAgg = ');
-                //console.log(self.state.searchStatsAgg);
-                //console.log('problemStatsAgg = ');
-                //console.log(self.state.problemStatsAgg);
-                //console.log('timingStatsAgg = ');
-                //console.log(self.state.timingStatsAgg);
-                //console.log('solutionQualityAgg = ');
-                //console.log(self.state.solutionQualityAgg);
             };
             reader.readAsText(file);
         }
