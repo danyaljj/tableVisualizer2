@@ -368,12 +368,12 @@ class TableVisualizer extends React.Component {
 
         // if it contains variable weights
         if( "alignmentWeights" in responseMsg[0].analyses[0].analysis.ilpSolution ) {
-            this.setState({variableWeights: responseMsg[0].analyses[0].analysis.ilpSolution.alignmentWeights});
-            console.log('alignmentWeights inside processResponse: ' );
-            console.log(responseMsg[0].analyses[0].analysis.ilpSolution.alignmentWeights);
+            var aw = responseMsg[0].analyses[0].analysis.ilpSolution.alignmentWeights;
+            var awArray = aw.map(function(key){return key["scores"]});
+            this.setState({variableWeights: awArray});
         }
-        //else
-        //    this.setState({variableWeights: []});
+        else
+            this.setState({variableWeights: []});
     }
 
     normalizeAggregateNumbers(maxInstances) {
