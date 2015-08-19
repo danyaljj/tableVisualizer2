@@ -133,11 +133,10 @@ class TableVisualizer extends React.Component {
         super(props);
         this.state = {
             text: 'Loading /api/hello',
-            tables: tablesEmpty,
+            tables: tablesEmpty.slice(),
             question: questionEmpty,
             BKColor: 'red',
-            response: 'empty',
-            response11: 'empty',
+            //response: 'empty',
             queryValue: "",
             activeAlignments: [],
             panelState: 0,
@@ -351,10 +350,29 @@ class TableVisualizer extends React.Component {
         );
     }
 
+    handleClean() {
+        this.setState({
+            tables: [],
+            question: {},
+            activeAlignments: [],
+            jsonLoadButton: 'Read File Content',
+
+            // stats
+            searchStats: [],
+            problemStats: [],
+            timingStats: [],
+            solutionQuality: [],
+
+            variableWeights: []
+        });
+    }
+
     processResponse(r) {
-        var responseMsg = r.response.success.answers.filter(function (key) {
+        var responseTmp = r.response.success.answers.filter(function (key) {
             return key.analyses[0].analysis.ilpSolution != null
         });
+
+        var responseMsg = responseTmp.slice();
 
         this.setState({
             loading: false,
@@ -399,7 +417,6 @@ class TableVisualizer extends React.Component {
             solutionQualityAgg: solutionQualityTmp
         });
     }
-
 
     addTheAggregateVariables(r) {
         var responseMsg = r.response.success.answers.filter(function (key) {
@@ -495,6 +512,7 @@ class TableVisualizer extends React.Component {
                 <section>
                     <label>Text:</label><input type="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
                     <button onClick={this.handleSubmit.bind(this)}>Ask</button>
+                    <button onClick={this.handleClean.bind(this)}>Clean</button>
                 </section>
                 {loading}
                 <br />
@@ -538,6 +556,7 @@ class TableVisualizer extends React.Component {
                         <Input type='file' accept='.json' ref='fileUpload' onChange={this.handleFileInputChange.bind(this)}/>
                     </div>
                     <Button onClick={this.handleJSONLoadButton.bind(this)}>{this.state.jsonLoadButton}</Button>
+                    <Button onClick={this.handleClean.bind(this)}>Clean</Button>
                     <br />
                     <br />
                     <select onChange={this.handleSelectChange.bind(this)}> {questions} </select>
