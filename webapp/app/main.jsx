@@ -340,6 +340,7 @@ class TableVisualizer extends React.Component {
     }
 
     handleSubmit() {
+        this.handleClean();
         this.setState({loading: true});
         var text = this.refs.query.getDOMNode().value;
         Qwest.get('/api/hello', {text: text}, {timeout: 100000000, responseType: 'json'}).then(
@@ -355,7 +356,6 @@ class TableVisualizer extends React.Component {
             tables: [],
             question: {},
             activeAlignments: [],
-            jsonLoadButton: 'Read File Content',
 
             // stats
             searchStats: [],
@@ -602,6 +602,7 @@ class TableVisualizer extends React.Component {
             reader.readAsText(file);
         }
         else {
+            this.handleClean();
             // read the content and add it to the strings
             var questionString = '';
             if( Array.isArray(this.state.questionsInJSONFile) && this.state.questionsInJSONFile.length > 0 ) {

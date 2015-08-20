@@ -1,25 +1,26 @@
 # Web Application Template
 
-This template provides a base for developing a web application which includes a ReactJS client-side application and an HTTP web server for serving both static content and an API emitting JSON (or another data format).
+This is a web application based on ReactJS client-side application in order to visualizer the results of 
+our table-based QA system. 
 
 ## Technologies
 
-* [less](https://trello.com/c/hDMLmLVd/43-less)
-* [ReactJS](https://trello.com/c/2YGms6UY/23-reactjs)
-* [gulp](https://trello.com/c/RTTfxRe1/37-gulp)
-* [nodejs](https://trello.com/c/rpIsl1kf/44-nodejs)
-* [spray](https://trello.com/c/5JnPSKPX/1-spray-stack)
-* [sbt](https://trello.com/c/N46rdff3/3-sbt-simple-build-tool)
+* less
+* ReactJS
+* gulp
+* nodejs
+* spray
+* sbt
 
 ## Dependencies
 
-* [nodejs](https://trello.com/c/rpIsl1kf/44-nodejs)
+* nodejs
 
   ```shell
   brew install node
   ```
 
-* [sbt](https://trello.com/c/N46rdff3/3-sbt-simple-build-tool)
+* sbt
 
   ```shell
   brew install sbt
@@ -56,4 +57,4 @@ There's a slight lag, but keep an eye on your `sbt` console for information rega
 
 ## Questions?
 
-[dev@allenai.org](mailto:dev@allenai.org)
+Contact [Daniel](http://web.engr.illinois.edu/~khashab2/)
