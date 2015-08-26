@@ -406,7 +406,7 @@ class TableVisualizer extends React.Component {
 
     normalizeAggregateNumbers(maxInstances) {
 
-        console.log('maxInstances = ' + maxInstances );
+        //console.log('maxInstances = ' + maxInstances );
 
         var searchStatsTmp = this.state.searchStatsAgg;
         var problemStatsTmp = this.state.problemStatsAgg;
@@ -429,17 +429,11 @@ class TableVisualizer extends React.Component {
 
     addTheAggregateVariables(r) {
 
-        console.log("r = ");
-        console.log(r);
-
         // do these only if there is a response!
         if(r.response.success.answers[0] != null) {
             var responseMsg = r.response.success.answers.filter(function (key) {
                 return key.analyses[0].analysis.ilpSolution != null
             });
-
-            console.log("responseMsg");
-            console.log(responseMsg);
 
             var searchStatsTmp = this.state.searchStatsAgg;
             Object.keys(searchStatsTmp).forEach(function (key) {
@@ -597,14 +591,14 @@ class TableVisualizer extends React.Component {
         var self = this;
         if( this.state.jsonLoadButton === "Read File Content" ) {
             // load the file content
-            console.log(this.refs.fileUpload.getInputDOMNode());
-            console.log(this.refs.fileUpload.getInputDOMNode().files);
+            //console.log(this.refs.fileUpload.getInputDOMNode());
+            //console.log(this.refs.fileUpload.getInputDOMNode().files);
             var reader = new FileReader();
             var file = this.refs.fileUpload.getInputDOMNode().files[0];
             reader.onload = function(upload) {
                 self.setState({ inputJSONFile: JSON.parse(upload.target.result) });
-                console.log('inputJSONFile = ');
-                console.log(self.state.inputJSONFile);
+                //console.log('inputJSONFile = ');
+                //console.log(self.state.inputJSONFile);
 
                 // populate questions into options
                 var tmp = self.state.inputJSONFile.evaluation.examEvaluations.map(function(e, i){
@@ -614,7 +608,7 @@ class TableVisualizer extends React.Component {
                 });
                 var merged = [];
                 merged = merged.concat.apply(merged, tmp);
-                console.log(merged);
+                //console.log(merged);
                 self.setState({ questionsInJSONFile: merged });
 
                 self.state.inputJSONFile.evaluation.examEvaluations.forEach(function(e1){
@@ -633,7 +627,7 @@ class TableVisualizer extends React.Component {
             var questionString = '';
             if( Array.isArray(this.state.questionsInJSONFile) && this.state.questionsInJSONFile.length > 0 ) {
                 var q = this.state.questionsInJSONFile[this.state.questionIdxJSONFile];
-                console.log(this.state.questionsInJSONFile[this.state.questionIdxJSONFile]);
+                //console.log(this.state.questionsInJSONFile[this.state.questionIdxJSONFile]);
                 var i = q[1];
                 var j = q[2];
                 this.processResponse(this.state.inputJSONFile.evaluation.examEvaluations[i].evaluatedAnswers[j].rawResponse);
@@ -646,7 +640,7 @@ class TableVisualizer extends React.Component {
     }
 
     handleSelectChange(event) {
-        console.log(event.target.value);
+        //console.log(event.target.value);
         this.setState(
             {
                 jsonLoadButton: "Show Alignment",
