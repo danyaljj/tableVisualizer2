@@ -160,7 +160,10 @@ class TableVisualizer extends React.Component {
             solutionQualityAgg: {"lb": 0, "ub": 0, "optgap": 0},
 
             // weights
-            variableWeights: []
+            variableWeights: [],
+
+            // a variable to keep track of whether there is a response for the current question or not.
+            noResponseAvailable: false
         };
     }
 
@@ -368,31 +371,37 @@ class TableVisualizer extends React.Component {
     }
 
     processResponse(r) {
-        var responseTmp = r.response.success.answers.filter(function (key) {
-            return key.analyses[0].analysis.ilpSolution != null
-        });
 
-        var responseMsg = responseTmp.slice();
+        if( r.response.success.answers[0] != null ) {
+            var responseTmp = r.response.success.answers.filter(function (key) {
+                return key.analyses[0].analysis.ilpSolution != null
+            });
+            var responseMsg = responseTmp.slice();
 
-        this.setState({
-            loading: false,
-            tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
-            question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
-            searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
-            problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
-            timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
-            solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality
-        });
+            this.setState({
+                loading: false,
+                tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
+                question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
+                searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
+                problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
+                timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
+                solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality,
+                noResponseAvailable: false
+            });
 
-        // if it contains variable weights
-        if( "alignmentIdToScore" in responseMsg[0].analyses[0].analysis.ilpSolution ) {
-            var aw = responseMsg[0].analyses[0].analysis.ilpSolution.alignmentIdToScore;
-            //var awArray = aw.map(function(key){return key["scores"]});
-            var awArray = aw;
-            this.setState({variableWeights: awArray});
+            // if it contains variable weights
+            if ("alignmentIdToScore" in responseMsg[0].analyses[0].analysis.ilpSolution) {
+                var aw = responseMsg[0].analyses[0].analysis.ilpSolution.alignmentIdToScore;
+                //var awArray = aw.map(function(key){return key["scores"]});
+                var awArray = aw;
+                this.setState({variableWeights: awArray});
+            }
+            else
+                this.setState({variableWeights: []});
         }
-        else
-            this.setState({variableWeights: []});
+        else {
+            this.setState({noResponseAvailable: true});
+        }
     }
 
     normalizeAggregateNumbers(maxInstances) {
@@ -419,40 +428,50 @@ class TableVisualizer extends React.Component {
     }
 
     addTheAggregateVariables(r) {
-        var responseMsg = r.response.success.answers.filter(function (key) {
-            return key.analyses[0].analysis.ilpSolution != null
-        });
 
-        var searchStatsTmp = this.state.searchStatsAgg;
-        Object.keys(searchStatsTmp).forEach( function(key){
-            searchStatsTmp[key] = searchStatsTmp[key] +
-                responseMsg[0].analyses[0].analysis.ilpSolution.searchStats[key]
-        });
+        console.log("r = ");
+        console.log(r);
 
-        var problemStatsTmp = this.state.problemStatsAgg;
-        Object.keys(problemStatsTmp).forEach( function(key){
-            problemStatsTmp[key] = problemStatsTmp[key] +
-                responseMsg[0].analyses[0].analysis.ilpSolution.problemStats[key]
-        });
+        // do these only if there is a response!
+        if(r.response.success.answers[0] != null) {
+            var responseMsg = r.response.success.answers.filter(function (key) {
+                return key.analyses[0].analysis.ilpSolution != null
+            });
 
-        var timingStatsTmp = this.state.timingStatsAgg;
-        Object.keys(timingStatsTmp).forEach( function(key){
-            timingStatsTmp[key] = timingStatsTmp[key] +
-                responseMsg[0].analyses[0].analysis.ilpSolution.timingStats[key]
-        });
+            console.log("responseMsg");
+            console.log(responseMsg);
 
-        var solutionQualityTmp = this.state.solutionQualityAgg;
-        Object.keys(solutionQualityTmp).forEach( function(key){
-            solutionQualityTmp[key] = solutionQualityTmp[key] +
-                responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality[key]
-        });
+            var searchStatsTmp = this.state.searchStatsAgg;
+            Object.keys(searchStatsTmp).forEach(function (key) {
+                searchStatsTmp[key] = searchStatsTmp[key] +
+                    responseMsg[0].analyses[0].analysis.ilpSolution.searchStats[key]
+            });
 
-        this.setState({
-            searchStatsAgg: searchStatsTmp,
-            problemStatsAgg: problemStatsTmp,
-            timingStatsAgg: timingStatsTmp,
-            solutionQualityAgg: solutionQualityTmp
-        });
+            var problemStatsTmp = this.state.problemStatsAgg;
+            Object.keys(problemStatsTmp).forEach(function (key) {
+                problemStatsTmp[key] = problemStatsTmp[key] +
+                    responseMsg[0].analyses[0].analysis.ilpSolution.problemStats[key]
+            });
+
+            var timingStatsTmp = this.state.timingStatsAgg;
+            Object.keys(timingStatsTmp).forEach(function (key) {
+                timingStatsTmp[key] = timingStatsTmp[key] +
+                    responseMsg[0].analyses[0].analysis.ilpSolution.timingStats[key]
+            });
+
+            var solutionQualityTmp = this.state.solutionQualityAgg;
+            Object.keys(solutionQualityTmp).forEach(function (key) {
+                solutionQualityTmp[key] = solutionQualityTmp[key] +
+                    responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality[key]
+            });
+
+            this.setState({
+                searchStatsAgg: searchStatsTmp,
+                problemStatsAgg: problemStatsTmp,
+                timingStatsAgg: timingStatsTmp,
+                solutionQualityAgg: solutionQualityTmp
+            });
+        }
     }
 
     setSuggestedQuery(event) {
@@ -536,7 +555,7 @@ class TableVisualizer extends React.Component {
         );
     }
 
-    loadJSONTab() {
+    responseContent() {
         var questions = this.state.questionsInJSONFile.map(function (sugg, i) {
             return <option key={i + 1} value={i}>{sugg[0]}</option>;
         });
@@ -549,6 +568,12 @@ class TableVisualizer extends React.Component {
         };
         var alignmentFromJSONFile = this.readAlignmentFromJSONFile();
         var statistics = this.getStatisticsTable(1, "Overall Statistics");
+
+        var Alert = require('react-bootstrap').Alert;
+        var noResponseWarning = '';
+        if( this.state.noResponseAvailable == true )
+            noResponseWarning = <Alert bsStyle='danger'> <strong>Oh snap! No Response Found! </strong> </Alert> ;
+
         return (
             <section>
                 <Panel header='JSON Load Panel'>
@@ -561,6 +586,7 @@ class TableVisualizer extends React.Component {
                     <br />
                     <select onChange={this.handleSelectChange.bind(this)}> {questions} </select>
                 </Panel>
+                {noResponseWarning}
                 {statistics}
                 {alignmentFromJSONFile}
             </section>
@@ -642,9 +668,9 @@ class TableVisualizer extends React.Component {
             queryTabContent = this.queryTab();
             controllerQueryPanelContent = this.controllerQueryPanel();
         }
-        var JSONTabContent = '';
+        var responseContent = '';
         if( this.state.panelState == 1 )
-            JSONTabContent = this.loadJSONTab();
+            responseContent = this.responseContent();
         return (
             <div>
                 <header className="padded"><h1>Multi-Table Alignment Visualization</h1></header>
@@ -659,7 +685,7 @@ class TableVisualizer extends React.Component {
                     </TabbedArea>
                     {controllerQueryPanelContent}
                     {queryTabContent}
-                    {JSONTabContent}
+                    {responseContent}
                 </main>
             </div>
         );
