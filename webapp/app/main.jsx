@@ -578,7 +578,7 @@ class TableVisualizer extends React.Component {
                     <Button onClick={this.handleClean.bind(this)}>Clean</Button>
                     <br />
                     <br />
-                    <select onChange={this.handleSelectChange.bind(this)}> {questions} </select>
+                    <select onChange={this.handleSelectChange.bind(this)} size="5"> {questions} </select>
                 </Panel>
                 {noResponseWarning}
                 {statistics}
