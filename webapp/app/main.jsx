@@ -519,7 +519,7 @@ class TableVisualizer extends React.Component {
         if (this.state.loading) {
             loading = <span>Loading...</span>;
         }
-        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)}> {suggestions} </select>);
+        var suggestedQueries = (<select onChange={self.setSuggestedQuery.bind(this)} size="4"> {suggestions} </select>);
         return (
             <div>
                 <section>
@@ -578,7 +578,7 @@ class TableVisualizer extends React.Component {
                     <Button onClick={this.handleClean.bind(this)}>Clean</Button>
                     <br />
                     <br />
-                    <select onChange={this.handleSelectChange.bind(this)} size="5"> {questions} </select>
+                    <select onChange={this.handleSelectChange.bind(this)} size="4"> {questions} </select>
                 </Panel>
                 {noResponseWarning}
                 {statistics}
