@@ -19,7 +19,7 @@ class SampleService(implicit ec: ExecutionContext) extends Directives with Spray
 
   def query(text: String): Future[StringMessage] = {
     Future {
-      val query = "http://localhost:8080/ask?text=" + URLEncoder.encode(text, "UTF-8")
+      val query = "http://localhost:8080/ask?text=" + URLEncoder.encode(text, "UTF-8") + "&solvers=tableilp"
       StringMessage(Source.fromURL(query).mkString)
     }
   }
