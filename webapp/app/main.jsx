@@ -250,7 +250,7 @@ class TableVisualizer extends React.Component {
         return (<table key={tableIndex}>{rows}</table> );
     }
 
-    ShowTables(tables) {
+    ShowTablesWithoutPanels(tables) {
         var Panel = require('react-bootstrap').Panel;
         var PanelGroup = require('react-bootstrap').PanelGroup;
 
@@ -497,7 +497,7 @@ class TableVisualizer extends React.Component {
         var self = this;
         var qCons = this.ShowARowOfTable(this.state.question.qConsAlignments);
         var options = this.ShowARowOfTable(this.state.question.choiceAlignments);
-        var ts = this.ShowTables(this.state.tables);
+        var ts = this.ShowTablesWithoutPanels(this.state.tables);
         var statistics = this.getStatisticsTable(0, "Per-Instance Statistics");
         return (
             <section>
