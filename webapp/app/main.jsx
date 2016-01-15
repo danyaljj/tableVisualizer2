@@ -258,6 +258,24 @@ class TableVisualizer extends React.Component {
         var rows = [];
         if (Array.isArray(tables)) {
             tables.forEach(function (table, i) {
+                rows.push(self.ShowATable(table, i));
+                rows.push(<br />);
+            });
+        }
+
+        return (
+            <div>{rows}</div>
+        );
+    }
+
+    ShowTablesWithPanels(tables) {
+        var Panel = require('react-bootstrap').Panel;
+        var PanelGroup = require('react-bootstrap').PanelGroup;
+
+        var self = this;
+        var rows = [];
+        if (Array.isArray(tables)) {
+            tables.forEach(function (table, i) {
                 var panelName = "Panel " + i;
                 rows.push(<Panel header={panelName}
                                  eventKey={i}> {self.ShowATable(table, i)}</Panel>);
@@ -483,21 +501,20 @@ class TableVisualizer extends React.Component {
         var statistics = this.getStatisticsTable(0, "Per-Instance Statistics");
         return (
             <section>
-                <br />
                 {statistics}
-                <br />
 
-                <h3> Question: </h3>
+                <b> Question: </b>
                 <table>
                     <tr>{qCons}</tr>
                 </table>
-                <h3> Options: </h3>
+                <br />
+                <b> Options: </b>
                 <table>
                     <tr>{options}</tr>
                 </table>
-                <br/>
 
-                <h3>Tables:</h3>
+                <hr />
+
                 {ts}
             </section>
         );
@@ -529,13 +546,7 @@ class TableVisualizer extends React.Component {
                 </section>
                 {loading}
                 <br />
-                <br />
-                <br />
-                <b> Suggestions: </b>
-                <br />
                 {suggestedQueries}
-                <br />
-                <br />
             </div>
         );
     }
