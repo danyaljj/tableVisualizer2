@@ -247,7 +247,7 @@ class TableVisualizer extends React.Component {
                 rows.push(goo);
             });
         }
-        return (<table key={tableIndex}>{rows}</table> );
+        return (<table key={tableIndex}><tbody>{rows}</tbody></table> );
     }
 
     ShowTablesWithoutPanels(tables) {
@@ -284,7 +284,7 @@ class TableVisualizer extends React.Component {
 
         return (
             <div>
-                <PanelGroup defaultActiveKey='2' accordion>
+                <PanelGroup>
                     {rows}
                 </PanelGroup>
             </div>
@@ -367,9 +367,37 @@ class TableVisualizer extends React.Component {
         Qwest.get('/api/hello', {text: text}, {timeout: 100000000, responseType: 'json'}).then(
             function (response) {
                 var obj = JSON.parse(response.text);
+                this.setState({jsonObj: obj});
                 this.processResponse(obj);
             }.bind(this)
         );
+    }
+
+    handlePrev() {
+        this.cleanAlignments();
+        this.state.index--;
+        this.processResponse(this.state.jsonObj);
+    }
+
+    handleNext() {
+        this.cleanAlignments();
+        this.state.index++;
+        this.processResponse(this.state.jsonObj);
+    }
+
+    cleanAlignments() {
+        this.setState({
+            tables: [],
+            question: {},
+            activeAlignments: [],
+
+            // stats
+            searchStats: [],
+            problemStats: [],
+            timingStats: [],
+            solutionQuality: [],
+            variableWeights: []
+        });
     }
 
     handleClean() {
@@ -383,33 +411,31 @@ class TableVisualizer extends React.Component {
             problemStats: [],
             timingStats: [],
             solutionQuality: [],
-
+            jsonObj: {},
+            index: 0,
             variableWeights: []
         });
     }
 
     processResponse(r) {
-
-        if( r.response.success.answers[0] != null ) {
-            var responseTmp = r.response.success.answers.filter(function (key) {
-                return key.analyses[0].analysis.ilpSolution != null
-            });
-            var responseMsg = responseTmp.slice();
-
+        var idx = this.state.index;
+        var responseMsg = r.response.success.answers;
+        if( responseMsg[idx] != null &&
+            responseMsg[idx].analyses[0].analysis.ilpSolution != null) {
             this.setState({
                 loading: false,
-                tables: responseMsg[0].analyses[0].analysis.ilpSolution.tableAlignments,
-                question: responseMsg[0].analyses[0].analysis.ilpSolution.questionAlignment,
-                searchStats: responseMsg[0].analyses[0].analysis.ilpSolution.searchStats,
-                problemStats: responseMsg[0].analyses[0].analysis.ilpSolution.problemStats,
-                timingStats: responseMsg[0].analyses[0].analysis.ilpSolution.timingStats,
-                solutionQuality: responseMsg[0].analyses[0].analysis.ilpSolution.solutionQuality,
+                tables: responseMsg[idx].analyses[0].analysis.ilpSolution.tableAlignments,
+                question: responseMsg[idx].analyses[0].analysis.ilpSolution.questionAlignment,
+                searchStats: responseMsg[idx].analyses[0].analysis.ilpSolution.searchStats,
+                problemStats: responseMsg[idx].analyses[0].analysis.ilpSolution.problemStats,
+                timingStats: responseMsg[idx].analyses[0].analysis.ilpSolution.timingStats,
+                solutionQuality: responseMsg[idx].analyses[0].analysis.ilpSolution.solutionQuality,
                 noResponseAvailable: false
             });
 
             // if it contains variable weights
-            if ("alignmentIdToScore" in responseMsg[0].analyses[0].analysis.ilpSolution) {
-                var aw = responseMsg[0].analyses[0].analysis.ilpSolution.alignmentIdToScore;
+            if ("alignmentIdToScore" in responseMsg[idx].analyses[0].analysis.ilpSolution) {
+                var aw = responseMsg[idx].analyses[0].analysis.ilpSolution.alignmentIdToScore;
                 //var awArray = aw.map(function(key){return key["scores"]});
                 var awArray = aw;
                 this.setState({variableWeights: awArray});
@@ -543,6 +569,8 @@ class TableVisualizer extends React.Component {
                     <label>Text:</label><input type="text" defaultValue={this.state.queryValue} ref="query" placeholder="Write a question here!" />
                     <button onClick={this.handleSubmit.bind(this)}>Ask</button>
                     <button onClick={this.handleClean.bind(this)}>Clean</button>
+                    <button onClick={this.handlePrev.bind(this)}>&lt;</button>
+                    <button onClick={this.handleNext.bind(this)}>&gt;</button>
                 </section>
                 {loading}
                 <br />
