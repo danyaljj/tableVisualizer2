@@ -132,6 +132,7 @@ class TableVisualizer extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            loading: false,
             text: 'Loading /api/hello',
             tables: tablesEmpty.slice(),
             question: questionEmpty,
@@ -173,11 +174,11 @@ class TableVisualizer extends React.Component {
         if (Array.isArray(row)) {
             row.forEach(function (tableCell, i) {
                 var klazz = '';
-                if (tableCell[1].length > 0)
+                if (tableCell.alignmentIds.length > 0)
                     klazz = "aligned";
 
                 var highlightAlignedCells = function () {
-                    self.setState({activeAlignments: tableCell[1]});
+                    self.setState({activeAlignments: tableCell.alignmentIds});
                 };
 
                 var unhighlight = function () {
@@ -185,7 +186,7 @@ class TableVisualizer extends React.Component {
                 };
 
                 var isActive = self.state.activeAlignments.filter(function (i) {
-                        return tableCell[1].indexOf(i) !== -1;
+                        return tableCell.alignmentIds.indexOf(i) !== -1;
                     }).length > 0;
 
                 if (isActive) {
@@ -195,7 +196,7 @@ class TableVisualizer extends React.Component {
                 rows.push(
                     <td className={klazz} onMouseEnter={highlightAlignedCells}
                         onMouseLeave={unhighlight} key={i}>
-                        {tableCell[0]}: {JSON.stringify(tableCell[1])}
+                        {tableCell.term}: {JSON.stringify(tableCell.alignmentIds)}
                     </td>
                 );
             });
@@ -449,9 +450,6 @@ class TableVisualizer extends React.Component {
     }
 
     normalizeAggregateNumbers(maxInstances) {
-
-        //console.log('maxInstances = ' + maxInstances );
-
         var searchStatsTmp = this.state.searchStatsAgg;
         var problemStatsTmp = this.state.problemStatsAgg;
         var timingStatsTmp = this.state.timingStatsAgg;
@@ -630,14 +628,10 @@ class TableVisualizer extends React.Component {
         var self = this;
         if( this.state.jsonLoadButton === "Read File Content" ) {
             // load the file content
-            //console.log(this.refs.fileUpload.getInputDOMNode());
-            //console.log(this.refs.fileUpload.getInputDOMNode().files);
             var reader = new FileReader();
             var file = this.refs.fileUpload.getInputDOMNode().files[0];
             reader.onload = function(upload) {
                 self.setState({ inputJSONFile: JSON.parse(upload.target.result) });
-                //console.log('inputJSONFile = ');
-                //console.log(self.state.inputJSONFile);
 
                 // populate questions into options
                 var tmp = self.state.inputJSONFile.evaluation.examEvaluations.map(function(e, i){
@@ -647,7 +641,6 @@ class TableVisualizer extends React.Component {
                 });
                 var merged = [];
                 merged = merged.concat.apply(merged, tmp);
-                //console.log(merged);
                 self.setState({ questionsInJSONFile: merged });
 
                 self.state.inputJSONFile.evaluation.examEvaluations.forEach(function(e1){
